@@ -120,10 +120,10 @@ hitbox_plane_struct::hitbox_plane_struct()
 		第十，十一个参数为第3个填充点的方块坐标， 
 	 */
 	_level_bind[0].init(3,4,4,5,4,3,3,2,4,3,6);
-	_level_bind[1].init(3,4,4,5,4,3,3,2,4,3,6);
-	_level_bind[2].init(3,4,4,5,4,3,3,2,4,3,6);
-	_level_bind[3].init(3,4,4,5,4,3,3,2,4,3,6);
-	_level_bind[4].init(3,4,4,5,4,3,3,2,4,3,6);
+	_level_bind[1].init(3,3,1,2,3,5,2,3,4,3,5);
+	_level_bind[2].init(3,4,1,0,6,3,2,5,2,5,6);
+	_level_bind[3].init(3,2,1,2,3,1,2,3,2,1,3);
+	_level_bind[4].init(3,4,1,4,4,4,2,4,3,4,6);
 	_level_bind[5].init(3,4,4,5,4,3,3,2,4,3,6);
 	_level_bind[6].init(3,4,4,5,4,3,3,2,4,3,6);
 	level(0);
@@ -136,11 +136,19 @@ int hitbox_plane_struct::level()
 }
 int hitbox_plane_struct::level(int pl)
 {
+	/* 设置游戏层级 */
 	_level = (pl > level_max-1)?level_max-1 : pl;
 	/* 设置游戏状态 */	
 	_box_count = _level_bind[_level]._box_count;
 	int x;
 	int y;
+	for(y=1;y<box_height-1;y++)
+	{
+		for(x=1;x<box_width-1;x++)
+		{
+			hitbox[x][y]._id = empty_box_id;
+		}
+	}
 	//
 	x = _level_bind[_level]._a_bind_id[0];
 	y = _level_bind[_level]._a_bind_id[1];

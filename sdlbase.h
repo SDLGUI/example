@@ -79,7 +79,7 @@ typedef class sdlsurface
 		int save_BMP(const char*);
 		sdlsurface* convert_surface(SDL_PixelFormat* fmt,Uint32 flags);
 		SDL_Rect* clip_rect();
-		Uint32 pixel(int,int);
+		int pixel(int,int);
 		int pixel(int,int,Uint32);
 		int lock_surface();
 		int unlock_surface();
@@ -716,15 +716,14 @@ sdlrenderer* sdlsurface::create_software_renderer()
 }
 //-----------------------------------------
 //得到指定坐标的像素值
-Uint32 sdlsurface::pixel(int x,int y)
+int sdlsurface::pixel(int x,int y)
 {
 	if(_surface==NULL)return -1;
 	int bpp = _surface->format->BytesPerPixel;
 	Uint8 *p = (Uint8 *)_surface->pixels + y * _surface->pitch + x * bpp;
-	//Uint32 *p = (Uint32 *)_surface->pixels + y * _surface->pitch + x * bpp;
 	switch(bpp)
 	{
-		case 1:return *(Uint8*)p;
+		case 1:return *p;
 		case 2:return *(Uint16*)p;
 		case 3:
 			if(SDL_BYTEORDER == SDL_BIG_ENDIAN)return p[0]<<16|p[1]<<8|p[2];
