@@ -80,8 +80,10 @@ struct hitbox_plane_struct
 	hitbox_level_bind_struct _level_bind[level_max];
 	/* 游戏层级 */
 	int _level;
-	/* 方块个数 */
+	/* 方块总数 */
 	int _box_count;
+	/* 当前方块可使用个数 */
+	int _box_current_count;
 	/* 活动方块的坐标 */
 	int _float_box_x;
 	int _float_box_y;
@@ -89,6 +91,8 @@ struct hitbox_plane_struct
 	hitbox_plane_struct();
 	/* 方块个数 */
 	int count();
+	/* 方块当前个数 */
+	int current_count();
 	/* 游戏级别 */
 	int level(int);
 	int level();
@@ -140,6 +144,7 @@ int hitbox_plane_struct::level(int pl)
 	_level = (pl > level_max-1)?level_max-1 : pl;
 	/* 设置游戏状态 */	
 	_box_count = _level_bind[_level]._box_count;
+	_box_current_count = _box_count;
 	int x;
 	int y;
 	for(y=1;y<box_height-1;y++)
@@ -202,6 +207,14 @@ int hitbox_plane_struct::pull(int px,int py)
 	}
 	return -1;
 }
+/*
+	 移动方块函数输入按键方向后返回五个状态
+		1.返回0表示游戏在本级过关 
+		2.返回-1表示游戏移动方块失败
+		3.返回100以内的数表示移动方块(x+10+y+10)
+		4.返回100至1000以内的数表示摘取方块(x+10+y+100)
+		5.返回1000及以上的数表示填充方块(x+10+y+1000)
+ */
 int hitbox_plane_struct::move(int r)
 {
 	int tx,ty,_state;
@@ -236,6 +249,7 @@ int hitbox_plane_struct::move(int r)
 					if(hitbox[tx][ty-1]._id==pass_box_id)
 					{
 						_float_box_y-=1;
+						return _float_box_x*10+_float_box_y+10;
 						return box_move_up;
 					}
 				break;
@@ -243,6 +257,7 @@ int hitbox_plane_struct::move(int r)
 					if(hitbox[tx][ty+1]._id==pass_box_id)
 					{
 						_float_box_y+=1;
+						return _float_box_x*10+_float_box_y+10;
 						return box_move_down;
 					}
 				break;
@@ -250,6 +265,7 @@ int hitbox_plane_struct::move(int r)
 					if(hitbox[tx-1][ty]._id==pass_box_id)
 					{
 						_float_box_x-=1;
+						return _float_box_x*10+_float_box_y+10;
 						return box_move_left;
 					}
 				break;
@@ -257,13 +273,14 @@ int hitbox_plane_struct::move(int r)
 					if(hitbox[tx+1][ty]._id==pass_box_id)
 					{
 						_float_box_x+=1;
+						return _float_box_x*10+_float_box_y+10;
 						return box_move_right;
 					}
 				break;
 			}
 			/* 如果不是移动活动方块，就是填充方块 */
 			/* 如果没有可以填充用的方块，则返回错误 */
-			if(!_box_count)return -1;
+			if(!_box_current_count)return -1;
 			switch(r)
 			{
 				case box_move_up:
@@ -290,30 +307,38 @@ int hitbox_plane_struct::move(int r)
 					switch(r)
 					{
 						case box_move_up:
-							if(hitbox[tx][ty+1]._id < pass_box_id)
+							if(hitbox[tx][ty+1]._id <= push_box_id)
 							{
 								push(tx,ty+1);
+								_box_current_count--;
+								if(!check())return 0;
 								return (tx*10+(ty+1))+1000;					
 							}
 						break;
 						case box_move_down:
-							if(hitbox[tx][ty-1]._id < pass_box_id)
+							if(hitbox[tx][ty-1]._id <= push_box_id)
 							{
 								push(tx,ty-1);
+								_box_current_count--;
+								if(!check())return 0;
 								return (tx*10+(ty-1))+1000;					
 							}
 						break;
 						case box_move_left:
-							if(hitbox[tx+1][ty]._id < pass_box_id)
+							if(hitbox[tx+1][ty]._id <= push_box_id)
 							{
 								push(tx+1,ty);
+								_box_current_count--;
+								if(!check())return 0;
 								return ((tx+1)*10+ty)+1000;					
 							}
 						break;
 						case box_move_right:
-							if(hitbox[tx-1][ty]._id < pass_box_id)
+							if(hitbox[tx-1][ty]._id <= push_box_id)
 							{
 								push(tx-1,ty);
+								_box_current_count--;
+								if(!check())return 0;
 								return ((tx-1)*10+ty)+1000;					
 							}
 						break;
@@ -341,6 +366,9 @@ int hitbox_plane_struct::move(int r)
 		break;
 		/* _state==1检测是否摘取,还是越界 */
 		case 1:
+			/* 先检测是否有可摘取方块,如果没有返回错误值 */
+			//if((_box_current_count+1) > _box_count)return -1;
+			/* 再检测是否可以摘取方块 */
 			while((tx>-1) && (tx<box_width) && (ty>-1) && (ty<box_height))
 			{
 				/* 如果被检测的方块ID比填充方块ID大，并且比行走方块ID小
@@ -349,6 +377,7 @@ int hitbox_plane_struct::move(int r)
 				if((hitbox[tx][ty]._id>(push_box_id)) && (hitbox[tx][ty]._id<pass_box_id))
 				{
 					pull(tx,ty);
+					_box_current_count++;
 					return tx*10+ty+100;	
 				}
 				/* 用于循环检测坐标 */
@@ -427,5 +456,9 @@ int hitbox_plane_struct::c_push_pos()
 int hitbox_plane_struct::count()
 {
 	return _box_count;
+}
+int hitbox_plane_struct::current_count()
+{
+	return _box_current_count;
 }
 #endif

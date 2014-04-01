@@ -2,47 +2,46 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <conio.h>
-#include "sdlgui.h"
-#include "hitbox_data.cpp"
-#include "plane_gui.cpp"
+#include "sdlgui/sdlgui.h"
+#include "core/hitbox_data.cpp"
+#include "game_gui/plane_gui.cpp"
 int sw,sh;
 using namespace std;
 //hitbox_plane_struct plane;
-plane_gui_ptr view = NULL;
-box_info_struct_ptr info = NULL;
-sdl_widget_ptr w;
-sdl_widget_ptr w1,w2,w3;
-sdl_frame frame("hit Box",100,100,gw,300,SDL_WINDOW_SHOWN);
- 
-int frame_proc(sdl_frame_ptr obj,SDL_Event* e)
+plane_gui_struct_ptr view = NULL;
+sdl_frame frame("hit Box",100,100,300,330,SDL_WINDOW_SHOWN);
+int frame_event(sdl_frame_ptr obj,SDL_Event *e)
 {
-	int v;
-	int x,y;
 	switch(e->type)
 	{
-		case SDL_USEREVENT:
-			switch(e->user.code)
+		case SDL_KEYUP:
+			if(view)
 			{
-				case sdlgui_button_click:
-					view->event(e);
-					//cout<<1<<endl;
-				break;
-				case sdlgui_event_timer:
-					if(info)info->info(&(view->plane));
-				break;
+				/* 让方块向指定方块移动 */
+				switch(e->key.keysym.sym)
+				{
+					case SDLK_UP:
+						view->move(box_move_up);
+					break;
+					case SDLK_DOWN:
+						view->move(box_move_down);
+					break;
+					case SDLK_LEFT:
+						view->move(box_move_left);
+					break;
+					case SDLK_RIGHT:
+						view->move(box_move_right);
+					break;
+				}
+				view->info();
 			}
 		break;
 	}
-	return 0;
 }
 int main(int argc,char** argv)
 {
-	info = frame.add<box_info_struct>("",0,gh,gw,30,1);
-	view = frame.add<plane_gui>("",0,0,gw,gh,1);
-	info->time(90);
-	cout<<info<<endl;
-	frame.add_timer(100);
-	frame.event(frame_proc);
+	view = frame.add<plane_gui_struct>("",0,0,300,330,1);
 	frame.ime.hide();
+	frame.event(frame_event);
 	return frame.run();
 }
