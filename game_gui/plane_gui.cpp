@@ -251,6 +251,7 @@ int plane_gui_struct::init(const char* ptitle,int px,int py,int pw,int ph,Uint32
 	/* 添加活动方块 */
 	_float_box = add<hitbox_floatbox_struct>("",0,0,_clip_size,_clip_size,1);
 	_float_box->fill_rect(NULL,0x00ff00);
+	//_float_box->hide();
 	/* 添加填充方块 */
 	for(i=0;i<3;i++)
 	{
@@ -258,9 +259,10 @@ int plane_gui_struct::init(const char* ptitle,int px,int py,int pw,int ph,Uint32
 		_t[i] = _push_box[i];
 		pid[i]=0;
 	}
+	_win = NULL;
 	_win = add<sdl_widget>("",0,0,300,300,1);
 	hitbox_bg.blit_surface(NULL,_win,NULL);
-	_win->hide();
+	if(_win)_win->hide();
 	return 0;
 }
 int plane_gui_struct::update()
@@ -442,8 +444,17 @@ hitbox_pushbox_struct_ptr plane_gui_struct::set_array(int id)
 }
 int plane_gui_struct::sysevent(SDL_Event* e)
 {
+	static float x,y;
+	static int is_down=0;
 	switch(e->type)
 	{
+		case SDL_FINGERDOWN:
+		case SDL_FINGERUP:
+		case SDL_KEYUP:
+			_parent->event(e);
+		break;
+		case SDL_MOUSEMOTION:
+		break;
 		case SDL_USEREVENT:
 			start(plane_data.level()+1);
 			active();

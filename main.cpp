@@ -10,10 +10,58 @@ using namespace std;
 //hitbox_plane_struct plane;
 plane_gui_struct_ptr view = NULL;
 sdl_frame frame("hit Box",100,100,300,330,SDL_WINDOW_SHOWN);
+float finger_x;
+float finger_y;
+int finger_d = 0;
+int down = 0;
 int frame_event(sdl_frame_ptr obj,SDL_Event *e)
 {
 	switch(e->type)
 	{
+		case SDL_MOUSEMOTION:
+			finger_x = e->tfinger.x;
+			finger_y = e->tfinger.y;
+		break;
+		case SDL_FINGERDOWN:
+			if(!down)
+			{
+				down = 1;
+				finger_x = e->tfinger.x;
+				finger_y = e->tfinger.y;
+			}
+		break;
+		case SDL_FINGERUP:
+			finger_x = e->tfinger.x - finger_x;
+			finger_y = e->tfinger.y - finger_y;
+			if(abs(finger_x/finger_y)<1)
+			{
+				if(finger_y>0)
+				{
+					view->move(box_move_down);
+					cout<<"down"<<endl;
+				}
+				else
+				{
+					view->move(box_move_up);
+					cout<<"up"<<endl;
+				}
+			}
+			else
+			{
+				if(finger_x>0)
+				{
+					view->move(box_move_right);
+					cout<<"right"<<endl;
+				}
+				else
+				{
+					view->move(box_move_left);
+					cout<<"left"<<endl;
+				}
+			}
+			view->info();
+			down = 0;
+		break;
 		case SDL_KEYUP:
 			if(view)
 			{
